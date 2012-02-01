@@ -1,6 +1,6 @@
-ERL          ?= erl
-ERLC		     ?= erlc
-APP          := mbtiles
+REBAR_CONFIG:=$(PWD)/rebar.config
+INCLUDE_DIR:=include
+SRC_DIR:=src
 
 .PHONY: deps doc
 
