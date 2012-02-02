@@ -1,6 +1,6 @@
 -module(mbtiles).
 -behaviour(gen_server).
--export([start/1, stop/0, get/5, get/6]).
+-export([start/1, stop/1, get/5, get/6]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
@@ -8,7 +8,7 @@
 %% @spec start(Arg :: atom())
 %start it up with the Arg being the name of a MBTILE set
 start(Arg) -> gen_server:start_link({local, Arg}, ?MODULE, Arg, []).
-stop() -> gen_server:call(?MODULE, stop).
+stop(Which) -> gen_server:call(Which, stop).
 
 %%@spec get(What::{tile|grid},{tms|xyz|[]}, Zoom, X, Y)
 %get a tile or grid
