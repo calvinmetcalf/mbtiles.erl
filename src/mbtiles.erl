@@ -1,21 +1,21 @@
 -module(mbtiles).
 -behaviour(gen_server).
--export([start/1, stop/0, get/5, get/4]).
+-export([start/1, stop/0, get/6, get/5]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
 %% @spec start(Arg :: atom())
 %start it up with the Arg being the name of a MBTILE set
-start(Arg) -> gen_server:start_link({local, ?MODULE}, ?MODULE, Arg, []).
+start(Tileset) -> gen_server:start_link({local, Tileset}, ?MODULE, Tileset, []).
 stop() -> gen_server:call(?MODULE, stop).
 
 %%@spec get(What::{tile|grid},{tms|xyz|[]}, Zoom, X, Y)
 %get a tile or grid
-get(What, tms, Z, X, Y) -> gen_server:call(?MODULE, {get, What, Z, X, Y});
-get(What, xyz, Z, X, Y) -> gen_server:call(?MODULE, {get, What, Z, X, flipY(Y,Z)}).
+get(Which, What, tms, Z, X, Y) -> gen_server:call(Which, {get, What, Z, X, Y});
+get(Which, What, xyz, Z, X, Y) -> gen_server:call(Which, {get, What, Z, X, flipY(Y,Z)}).
 
-get(What, Z, X, Y) -> get(What, xyz, Z, X, Y).
+get(Which, What, Z, X, Y) -> get(Which, What, xyz, Z, X, Y).
 
 flipY(Y,Z) ->
 try round(math:pow(2,Z) - Y - 1)
