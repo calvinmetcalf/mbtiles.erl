@@ -39,10 +39,13 @@ handle_call({get,_,_,_,_}, _From, D)->
 Reply = {noIdea},
 {reply, Reply, D};
 handle_call({get,info.json}, _From, D)->
-Reply = cleanInfo(sqlite3:read_all(D, metadata)),
+Reply = cleanInfo(extractInfo(sqlite3:read_all(D, metadata))),
 {reply, Reply, D};
 handle_call({get,info.jsonp}, _From, D)->
-Reply = pi(cleanInfo(sqlite3:read_all(D, metadata))),
+Reply = pi(cleanInfo(extractInfo(sqlite3:read_all(D, metadata)))),
+{reply, Reply, D};
+handle_call({get,info}, _From, D)->
+Reply = extractInfo(sqlite3:read_all(D, metadata)),
 {reply, Reply, D};
 handle_call({get,_}, _From, D)->
 Reply = {noIdea},
@@ -85,10 +88,12 @@ case sqlite3:sql_exec(D, lists:concat(["select key_name, key_json FROM grid_data
 true -> throw(noSuchKey)
 end.
 
+extractInfo(D)->
+lists:map(fun({B,C})->{binary_to_list(B),binary_to_list(C)} end,element(2,hd(tl(D)))).
+
 cleanInfo(D)->
 %with much thanks to http://stackoverflow.com/questions/3923400/erlang-tuple-list-into-json for the following
-Original = lists:map(fun({B,C})->{binary_to_list(B),binary_to_list(C)} end,element(2,hd(tl(D)))),
-StingConverted = [ {X,list_to_binary(Y)} || {X,Y} <- Original ],
+StingConverted = [ {X,list_to_binary(Y)} || {X,Y} <- D ],
 mochijson2:encode(StingConverted).
 
 pg(G) ->
