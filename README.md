@@ -29,3 +29,11 @@ and
 	file:write_file("94.grid.json",mbtiles:get(gc,grid,8,77,94)).
 	
 for grid json 
+
+you can also do 
+
+	mbtiles:get(gc,info). 
+
+change info to info.json or info.jsonp to if you would like one of those format as opposed to an erlang list of tuples
+
+if mbtiles:start(db). is used on a non exsisting set of mbtiles then it will be created, but I'm using a significantly simplified schema with 4 tables tiles, grids, grid_data, and metadata which functionally should be identical. 
