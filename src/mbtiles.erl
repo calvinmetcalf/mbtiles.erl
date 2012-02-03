@@ -3,7 +3,7 @@
 -export([start/1, stop/1, get/2, get/5, get/6, put/7, put/6, put/3]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+         terminate/2, code_change/3,clean/1]).
 
 %% @spec start(Arg :: atom())
 %start it up with the Arg being the name of a MBTILE set
@@ -58,6 +58,13 @@ Reply = {noIdea},
 {reply, Reply, D};
 handle_call({put,tile, Z, X, Y, Data}, _From, D)->
 Reply = sqlite3:write(D, tiles, [{zoom_level, Z},{tile_column,X},{tile_row,Y},{tile_data,{blob,Data}}]),
+{reply, Reply, D};
+handle_call({put,grid, Z, X, Y, Data}, _From, D)->
+{ok,{obj,Gridjson},[]}  = rfc4627:decode(lists:sublist(binary_to_list(Data),6,length(binary_to_list(Data))-7)),
+Grid = zlib:gzip(list_to_binary([123,"grid",44,lists:map(fun(A) -> binary_to_list(A) end, element(2,hd(Gridjson))),125])),
+Key_name = sqlite3:value_to_sql([123,"keys",58,tl(lists:flatten(lists:map(fun(A) -> [44,34,binary_to_list(A),34] end, element(2,hd(tl(Gridjson)))))),125]),
+Key_json = sqlite3:value_to_sql(tl(lists:flatten(lists:map(fun({A,{obj,B}}) -> [44,123,A,58,123,tl(lists:flatten(lists:map(fun(C) -> clean(C) end,B))),125,125] end, element(2,element(2,hd(tl(tl(Gridjson))))))))),
+Reply = {sqlite3:write(D,grids,[{zoom_level, Z},{tile_column,X},{tile_row,Y},{grid,{blob,Grid}}]),sqlite3:write(D,grid_data,[{zoom_level, Z},{tile_column,X},{tile_row,Y},{key_name, Key_name},{key_json,Key_json}])},
 {reply, Reply, D};
 handle_call({put, Name, Value}, _From, D)->
 Reply = sqlite3:write(D, metadata,[{name, Name},{value,Value}]),
@@ -131,6 +138,12 @@ sqlite3:create_table(Db, grids, [{zoom_level, integer},{tile_column, integer},{t
 sqlite3:create_table(Db, grid_data, [{zoom_level, integer},{tile_column, integer},{tile_row, integer},{key_name, text}, {key_json, text}]),
 sqlite3:create_table(Db, metadata, [{name, text},{value, text}]),
 D.
+
+clean({"name",Bin})->
+[44,123,"name",44,binary_to_list(Bin),125];
+clean({A,B})->
+[44,123,A,44,integer_to_list(B),125].
+
 
 handle_cast(_Msg, State) -> {noreply, State}.
 handle_info(_Info, State) -> {noreply, State}.
