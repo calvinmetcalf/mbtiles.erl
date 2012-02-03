@@ -16,7 +16,11 @@ to start it then to get a tile
 
 	mbtiles:get(gc,tile,8,77,94).
 	
-should get <<numbers>> to see it try 
+should get <<numbers>> xyz is assumed but to get tms you can do 
+
+	mbtiles:get(gc,tile,tms,8,77,94).
+
+to see it try 
 
 	file:write_file("94.png",mbtiles:get(gc,tile,8,77,94)). 
 	
@@ -37,3 +41,19 @@ you can also do
 change info to info.json or info.jsonp to if you would like one of those format as opposed to an erlang list of tuples
 
 if mbtiles:start(db). is used on a non exsisting set of mbtiles then it will be created, but I'm using a significantly simplified schema with 4 tables tiles, grids, grid_data, and metadata which functionally should be identical. 
+
+also added 
+	
+	mbtiles:put(db,"name","value").
+
+which will insert name and value into the metadata table, notice the quotations.
+
+	mbtiles:put(db,tile,z,x,y,tiledata).
+
+will incert the binary tiledata into the db flipping the y you can also use
+
+	mbtiles:put(db,tile,{tms|xyz},z,x,y,tiledata).
+
+if you want to specify the scheme. 
+
+putting grids in will come......at some point.

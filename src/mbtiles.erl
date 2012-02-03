@@ -1,6 +1,6 @@
 -module(mbtiles).
 -behaviour(gen_server).
--export([start/1, stop/1, get/2, get/5, get/6]).
+-export([start/1, stop/1, get/2, get/5, get/6, put/7, put/6, put/3]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
@@ -19,7 +19,12 @@ get(Which, What, xyz, Z, X, Y) -> gen_server:call(Which, {get, What, Z, X, flipY
 get(Which, What, Z, X, Y) -> get(Which, What, xyz, Z, X, Y).
 
 get(Which, I) -> gen_server:call(Which, {get, I}).
+put(Which, What, tms, Z, X, Y, Data) -> gen_server:call(Which, {put, What, Z, X, Y, Data});
+put(Which, What, xyz, Z, X, Y, Data) -> gen_server:call(Which, {put, What, Z, X, flipY(Y,Z), Data}).
 
+put(Which, What, Z, X, Y, Data) -> put(Which, What, xyz, Z, X, Y, Data).
+
+put(Which, Name, Value) -> gen_server:call(Which, {put,Name, Value}).
 flipY(Y,Z) ->
 try round(math:pow(2,Z) - Y - 1)
 catch
@@ -50,6 +55,12 @@ Reply = extractInfo(sqlite3:read_all(D, metadata)),
 {reply, Reply, D};
 handle_call({get,_}, _From, D)->
 Reply = {noIdea},
+{reply, Reply, D};
+handle_call({put,tile, Z, X, Y, Data}, _From, D)->
+Reply = sqlite3:write(D, tiles, [{zoom_level, Z},{tile_column,X},{tile_row,Y},{tile_data,{blob,Data}}]),
+{reply, Reply, D};
+handle_call({put, Name, Value}, _From, D)->
+Reply = sqlite3:write(D, metadata,[{name, Name},{value,Value}]),
 {reply, Reply, D};
 handle_call(stop, _From, D) ->
 {stop, normal, stopped, D}.
